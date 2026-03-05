@@ -152,7 +152,7 @@ RUN jq -n \
   '{sources: $sources[0], packages: $packages[0]}' \
   > /build/build-lock.json
 
-FROM dhi.io/node:24-debian13 AS prod
+FROM dhi.io/node:24-debian13-dev AS prod-build
 ARG DEBIAN_FRONTEND=noninteractive
 ARG DEBIAN_RELEASE
 ENV DEBIAN_RELEASE=${DEBIAN_RELEASE}
@@ -234,8 +234,15 @@ RUN echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.as
 COPY --from=dev /usr/local/lib/ /usr/local/lib/
 COPY --from=dev /build/ /build/
 
+RUN ldconfig /usr/local/lib
+
+FROM dhi.io/node:24-debian13 AS prod
 WORKDIR /usr/src/app
 
 ENV LD_LIBRARY_PATH=/usr/lib/jellyfin-ffmpeg/lib:/usr/lib/wsl/lib
 
-RUN ldconfig /usr/local/lib
+COPY --from=prod-build /usr/local/lib/ /usr/local/lib/
+COPY --from=prod-build /build/ /build/
+COPY --from=prod-build /usr/bin/ /usr/bin/
+COPY --from=prod-build /usr/lib/ /usr/lib/
+COPY --from=prod-build /usr/share/postgresql/ /usr/share/postgresql/
