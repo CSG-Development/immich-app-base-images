@@ -1,9 +1,17 @@
-pg:
-  - "14"
-  - "17"
-vectorchord:
-  - "0.4.3"
-pgvector:
-  - "0.8.1"
-pgvectors:
-  - "0.2.0"
+sets:
+  - pg: "14"
+    pgvector: "0.8.1"
+    vectorchord: "0.4.3"
+    pgvectors: "0.2.0"
+  - pg: "15"
+    pgvector: "0.8.1"
+    vectorchord: "0.4.3"
+    pgvectors: "0.2.0"
+  - pg: "16"
+    pgvector: "0.8.1"
+    vectorchord: "0.4.3"
+    pgvectors: "0.2.0"
+  - pg: "17"
+    pgvector: "0.8.1"
+    vectorchord: "0.4.3"
+    pgvectors: "0.3.0"   # 0.2.0 has no pg17 packages

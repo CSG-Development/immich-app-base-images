@@ -3,7 +3,7 @@ name: Build and Push Postgres Images
 on:
   workflow_dispatch:
   push:
-    branches: [main, move-to-dhi]
+    branches: [main, DON-223]
   pull_request:
 
 concurrency:
@@ -25,10 +25,10 @@ jobs:
         uses: actions/checkout@v4
 
       - id: get-versions
-        name: Get dependency versions
+        name: Get build sets
         uses: mikefarah/yq@v4
         with:
-          cmd: yq eval -o=json -I=0 postgres/versions.yaml
+          cmd: yq eval '.sets' -o=json -I=0 postgres/versions.yaml
 
   build_and_push:
     runs-on: ubuntu-latest
