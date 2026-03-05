@@ -65,7 +65,7 @@ jobs:
         if: ${{ !github.event.pull_request.head.repo.fork }}
         with:
           registry: ghcr.io
-          username: ${{ github.repository_owner }}
+          username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Determine version change
@@ -106,6 +106,7 @@ jobs:
           context: postgres/
           platforms: linux/amd64,linux/arm64
           push: ${{ steps.should-release.outputs.result }}
+          attestations: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
           tags: ${{ steps.metadata.outputs.tags }}

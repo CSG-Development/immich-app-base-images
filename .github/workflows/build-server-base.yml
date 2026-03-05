@@ -3,7 +3,7 @@ name: Build and Push Server Base Images
 on:
   workflow_dispatch:
   push:
-    branches: [main, move-to-dhi]
+    branches: [main, DON-223]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -55,6 +55,7 @@ jobs:
           file: ./server/Dockerfile
           target: dev
           push: true
+          attestations: false
           tags: |
             ghcr.io/${{ steps.vars.outputs.owner_lower }}/base-server-dev:${{ github.sha }}
             ghcr.io/${{ steps.vars.outputs.owner_lower }}/base-server-dev:${{ steps.ts.outputs.timestamp }}
@@ -68,6 +69,7 @@ jobs:
           file: ./server/Dockerfile
           target: prod
           push: true
+          attestations: false
           tags: |
             ghcr.io/${{ steps.vars.outputs.owner_lower }}/base-server-prod:${{ github.sha }}
             ghcr.io/${{ steps.vars.outputs.owner_lower }}/base-server-prod:${{ steps.ts.outputs.timestamp }}
