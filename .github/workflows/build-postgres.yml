@@ -3,7 +3,7 @@ name: Build and Push Postgres Images
 on:
   workflow_dispatch:
   push:
-    branches: [main, DON-223]
+    branches: [main, move-to-dhi]
   pull_request:
 
 concurrency:
@@ -35,7 +35,8 @@ jobs:
     needs: [matrix]
     strategy:
       fail-fast: false
-      matrix: ${{ fromJson(needs.matrix.outputs.matrix) }}
+      matrix:
+        include: ${{ fromJson(needs.matrix.outputs.matrix) }}
 
     steps:
       - name: Checkout

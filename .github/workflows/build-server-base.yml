@@ -3,7 +3,7 @@ name: Build and Push Server Base Images
 on:
   workflow_dispatch:
   push:
-    branches: [main, DON-223]
+    branches: [main, move-to-dhi]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
