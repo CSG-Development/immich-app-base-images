@@ -1,64 +1,72 @@
 name: Build and Push Server Base Images
 
 on:
+  workflow_dispatch:
   push:
-    tags:
-      - "*"
-    branches: [main]
-  pull_request:
+    branches: [main, move-to-dhi]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  packages: write
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}
 
 jobs:
-  pre-job:
+  build-server:
+    name: Build Server Images
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    outputs:
-      should_run: ${{ steps.check.outputs.should_run }}
-    steps:
-      - name: Check what should run
-        id: check
-        uses: immich-app/devtools/actions/pre-job@eed0f8b8165ffcb951f2ba854b2dd031935e1d73 # pre-job-action-v2.0.2
-        with:
-          github-token: ${{ github.token }}
-          filters: |
-            server:
-              - 'server/**'
-          force-filters: |
-            - '.github/workflows/build-server-base.yml'
-          force: ${{ startsWith(github.ref, 'refs/tags') || github.ref_name == 'main' }}
-
-  build_and_push:
-    needs: pre-job
-    uses: immich-app/devtools/.github/workflows/multi-runner-build.yml@bd49ed7a5a6022149f79b6564df48177476a822b # multi-runner-build-workflow-2.2.1
-    if: ${{ fromJSON(needs.pre-job.outputs.should_run).server == true }}
-    strategy:
-      fail-fast: true
-      matrix:
-        target: ["dev", "prod"]
-    permissions:
-      contents: read
-      actions: read
       packages: write
-    with:
-      image: base-server-${{ matrix.target }}
-      context: server
-      dockerfile: server/Dockerfile
-      target: ${{ matrix.target }}
-      release-tag-type: git-tag
-
-  success-check:
-    needs: build_and_push
-    permissions: {}
-    runs-on: ubuntu-latest
-    if: always()
     steps:
-      - uses: immich-app/devtools/actions/success-check@68f10eb389bb02a3cf9d1156111964c549eb421b # 0.0.4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to DHI
+        uses: docker/login-action@v3
         with:
-          needs: ${{ toJSON(needs) }}
+          registry: dhi.io
+          username: ${{ secrets.DHI_USERNAME }}
+          password: ${{ secrets.DHI_PASSWORD }}
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Generate timestamp
+        id: ts
+        run: echo "timestamp=$(date +%Y%m%d%H%M)" >> $GITHUB_OUTPUT
+
+      - name: Build and push base-server-dev
+        uses: docker/build-push-action@v6
+        with:
+          context: ./server
+          file: ./server/Dockerfile
+          target: dev
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}/base-server-dev:${{ github.sha }}
+            ${{ env.IMAGE_PREFIX }}/base-server-dev:${{ steps.ts.outputs.timestamp }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push base-server-prod
+        uses: docker/build-push-action@v6
+        with:
+          context: ./server
+          file: ./server/Dockerfile
+          target: prod
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}/base-server-prod:${{ github.sha }}
+            ${{ env.IMAGE_PREFIX }}/base-server-prod:${{ steps.ts.outputs.timestamp }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

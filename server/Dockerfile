@@ -1,6 +1,6 @@
 ARG DEBIAN_RELEASE=trixie
 
-FROM node:24.12.0-${DEBIAN_RELEASE}-slim@sha256:35876cf614d84f076fcd51792d2ebe8ef21663d785d52ef09c2e459b0b199efa AS base
+FROM dhi.io/node:24-debian13-dev AS base
 ARG DEBIAN_FRONTEND=noninteractive
 ARG DEBIAN_RELEASE
 ENV DEBIAN_RELEASE=${DEBIAN_RELEASE}
@@ -22,6 +22,7 @@ ADD --chmod=644 https://www.postgresql.org/media/keys/ACCC4CF8.asc /usr/share/po
 
 RUN echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt ${DEBIAN_RELEASE}-pgdg main" > /etc/apt/sources.list.d/pgdg.list && \
   apt-get update && \
+  apt-get install -y --allow-downgrades libexpat1=2.7.1-2 libexpat1-dev=2.7.1-2 && \
   apt-get install --no-install-recommends -yqq \
   git \
   autoconf \
@@ -151,7 +152,7 @@ RUN jq -n \
   '{sources: $sources[0], packages: $packages[0]}' \
   > /build/build-lock.json
 
-FROM node:24.12.0-${DEBIAN_RELEASE}-slim@sha256:35876cf614d84f076fcd51792d2ebe8ef21663d785d52ef09c2e459b0b199efa AS prod
+FROM dhi.io/node:24-debian13 AS prod
 ARG DEBIAN_FRONTEND=noninteractive
 ARG DEBIAN_RELEASE
 ENV DEBIAN_RELEASE=${DEBIAN_RELEASE}
