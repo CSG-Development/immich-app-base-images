@@ -246,3 +246,5 @@ COPY --from=prod-build /build/ /build/
 COPY --from=prod-build /usr/bin/ /usr/bin/
 COPY --from=prod-build /usr/lib/ /usr/lib/
 COPY --from=prod-build /usr/share/postgresql/ /usr/share/postgresql/
+# Immich server entrypoint expects /bin/bash; DHI runtime has no shell
+COPY --from=prod-build /bin/bash /bin/bash
