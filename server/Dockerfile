@@ -239,7 +239,7 @@ RUN ldconfig /usr/local/lib
 FROM dhi.io/node:24-debian13 AS prod
 WORKDIR /usr/src/app
 
-ENV LD_LIBRARY_PATH=/usr/lib/jellyfin-ffmpeg/lib:/usr/lib/wsl/lib
+ENV LD_LIBRARY_PATH=/usr/lib/jellyfin-ffmpeg/lib:/usr/lib/wsl/lib:/usr/local/lib
 
 COPY --from=prod-build /usr/local/lib/ /usr/local/lib/
 COPY --from=prod-build /build/ /build/
