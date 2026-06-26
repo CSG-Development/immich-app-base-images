@@ -1,6 +1,6 @@
 ARG DEBIAN_RELEASE=trixie
 
-FROM dhi.io/node:24-debian13-dev AS base
+FROM dhi.io/node:24.14-debian13-dev AS base
 ARG DEBIAN_FRONTEND=noninteractive
 ARG DEBIAN_RELEASE
 ENV DEBIAN_RELEASE=${DEBIAN_RELEASE}
@@ -152,7 +152,7 @@ RUN jq -n \
   '{sources: $sources[0], packages: $packages[0]}' \
   > /build/build-lock.json
 
-FROM dhi.io/node:24-debian13-dev AS prod-build
+FROM dhi.io/node:24.14-debian13-dev AS prod-build
 ARG DEBIAN_FRONTEND=noninteractive
 ARG DEBIAN_RELEASE
 ENV DEBIAN_RELEASE=${DEBIAN_RELEASE}
@@ -236,7 +236,7 @@ COPY --from=dev /build/ /build/
 
 RUN ldconfig /usr/local/lib
 
-FROM dhi.io/node:24-debian13 AS prod
+FROM dhi.io/node:24.14-debian13 AS prod
 WORKDIR /usr/src/app
 
 ENV LD_LIBRARY_PATH=/usr/lib/jellyfin-ffmpeg/lib:/usr/lib/wsl/lib:/usr/local/lib
