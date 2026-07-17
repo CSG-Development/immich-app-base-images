@@ -2,6 +2,23 @@
 
 Append-only iteration history for Immich DHI base images (`server/`, `postgres/`, workflows).
 
+### Iteration 2026-07-17 08:07 UTC
+
+- **Context**
+  - CSG DHI postgres inherited `PGDATA=/var/lib/postgresql/14/data`; Immich/homecloud mount `/var/lib/postgresql/data`, so initdb ran off the bind mount after compose pinned `ghcr.io/csg-development/postgres`.
+- **Target**
+  - Bake Immich-compatible `PGDATA=/var/lib/postgresql/data` into the postgres image on branch `fix/postgres-pgdata-path` (from `move-to-dhi`).
+- **Actions log**
+  - Set `ENV PGDATA=/var/lib/postgresql/data` in `postgres/Dockerfile` after the DHI `FROM`.
+- **Validation**
+  - Dockerfile diff reviewed; rebuild/publish and digest pin deferred to follow-up.
+- **Problems**
+  - Published GHCR digest and homecloud/test redeploy still pending. Status: **open**.
+- **To Be Done**
+  - Rebuild/publish `14-vectorchord0.4.3-pgvectors0.2.0`; pin new digest in `immich-app-immich` compose.prod; set `PGDATA` in homecloud compose; realign test volume.
+- **References**
+  - `CHANGELOG.md`, `postgres/Dockerfile`
+
 ### Iteration 2026-06-26 04:58 UTC
 
 - **Context**

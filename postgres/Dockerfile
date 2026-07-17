@@ -16,6 +16,8 @@ ARG TARGETARCH
 COPY --from=pgvector-source /usr/share/postgresql/${PG_MAJOR}/extension/vector* /usr/share/postgresql/${PG_MAJOR}/extension/
 COPY --from=pgvector-source /usr/lib/postgresql/${PG_MAJOR}/lib/vector.so /usr/lib/postgresql/${PG_MAJOR}/lib/
 
+# DHI default is /var/lib/postgresql/${PG_MAJOR}/data; Immich/homecloud mount /var/lib/postgresql/data
+ENV PGDATA=/var/lib/postgresql/data
 ENV DB_STORAGE_TYPE=SSD
 
 # VectorChord/pgvecto.rs use amd64 in asset names; uname -m returns x86_64
