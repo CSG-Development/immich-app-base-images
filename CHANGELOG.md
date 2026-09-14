@@ -2,6 +2,23 @@
 
 Append-only iteration history for Immich DHI base images (`server/`, `postgres/`, workflows).
 
+### Iteration 2026-09-14 15:27 UTC
+
+- **Context**
+  - GitHub Actions concurrency was canceling long docker builds (`Error: The operation was canceled` while writing layers).
+- **Target**
+  - Keep one named concurrency group per workflow+ref, but do not abort an in-flight image build when another run starts.
+- **Actions log**
+  - Set `concurrency.cancel-in-progress` from `true` to `false` in `build-postgres.yml` and `build-server-base.yml`; left `group:` unchanged.
+- **Validation**
+  - YAML reviewed: both files still use `group: ${{ github.workflow }}-${{ github.ref }}` with `cancel-in-progress: false`.
+- **Problems**
+  - Queued runs for the same ref now wait instead of canceling; CI wall time may grow if pushes overlap. Status: **mitigated**.
+- **To Be Done**
+  - Push `fix/ci-build-after-upstream-merge` and confirm Actions complete without cancel-in-progress aborts.
+- **References**
+  - `CHANGELOG.md`, `.github/workflows/build-postgres.yml`, `.github/workflows/build-server-base.yml`
+
 ### Iteration 2026-09-14 12:35 UTC
 
 - **Context**

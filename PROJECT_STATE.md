@@ -17,7 +17,7 @@ Structured companion to `CHANGELOG.md`.
 
 - Server: multi-stage — no shell in final prod stage except copied **bash** for Immich `tini` entrypoint; VIPS stack with `/usr/local/lib` on `LD_LIBRARY_PATH`.
 - Postgres: real extension files under `/usr/lib` and `/usr/share`; DHI runtime `/opt/postgresql/${PG_MAJOR}/…` is absolute `ln -s` to those files; entrypoint remains bash-based on `-dev` image; `ENV PGDATA=/var/lib/postgresql/data` overrides DHI versioned default so Immich volume mounts work.
-- GitHub Actions: build/push on relevant branches; DHI registry auth via secrets.
+- GitHub Actions: build/push on relevant branches; DHI registry auth via secrets; concurrency groups per workflow+ref with `cancel-in-progress: false` so overlapping pushes do not abort in-flight image builds.
 
 ## Validation
 
@@ -30,6 +30,7 @@ Structured companion to `CHANGELOG.md`.
 - **Postgres minimal image**: blocked by bash entrypoint. Status: **open** (accepted).
 - **Postgres PGDATA vs Immich mount**: Dockerfile override is in the image; GHCR republish + consumer digest/compose still pending. Status: **open**.
 - **CI after upstream 3.1.0 merge**: server `libexpat` pin and postgres DHI wget failed on `move-to-dhi`; fix is on `fix/ci-build-after-upstream-merge`. Status: **open**.
+- **GHA cancel-in-progress**: long docker layer writes were aborted when a newer run started for the same ref; now `cancel-in-progress: false`. Status: **mitigated**.
 - **Postgres extension duplication**: current DHI already directory-symlinks `/opt/postgresql/N/{lib,share}` → `/usr/lib/...`; local PG14 811 MB / PG17 1.07 GB vs GHCR 1.09 / 1.60 GB; `/opt` is 12K. Status: **mitigated** (CI publish still pending).
 - **Rootless Docker + DHI apt dirs**: writing `/etc/apt/preferences.d` fails with EOVERFLOW (`userxattr`); use rootful or GHA. Status: **mitigated**.
 
@@ -43,3 +44,4 @@ Structured companion to `CHANGELOG.md`.
 
 - `CHANGELOG.md` (mandatory)
 - `server/Dockerfile`, `postgres/Dockerfile`, `postgres/versions.yaml`
+- `.github/workflows/build-postgres.yml`, `.github/workflows/build-server-base.yml`
