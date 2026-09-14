@@ -22,7 +22,6 @@ ADD --chmod=644 https://www.postgresql.org/media/keys/ACCC4CF8.asc /usr/share/po
 
 RUN echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt ${DEBIAN_RELEASE}-pgdg main" > /etc/apt/sources.list.d/pgdg.list && \
   apt-get update && \
-  apt-get install -y --allow-downgrades libexpat1=2.7.1-2 libexpat1-dev=2.7.1-2 && \
   apt-get install --no-install-recommends -yqq \
   git \
   autoconf \
