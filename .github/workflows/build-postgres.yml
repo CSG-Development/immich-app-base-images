@@ -117,6 +117,7 @@ jobs:
             VECTORCHORD_TAG=${{ matrix.vectorchord }}
             PGVECTORS_TAG=${{ matrix.pgvectors }}
             PGVECTOR_TAG=${{ matrix.pgvector }}
+            PGVECTORS_SUFFIX=${{ matrix.pgvectors == '0.3.0' && '_vectors' || '' }}
 
   results:
     if: ${{ always() }}
