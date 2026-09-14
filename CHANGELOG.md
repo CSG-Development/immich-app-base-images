@@ -2,6 +2,71 @@
 
 Append-only iteration history for Immich DHI base images (`server/`, `postgres/`, workflows).
 
+### Iteration 2026-09-14 12:35 UTC
+
+- **Context**
+  - Local linux/amd64 size check of uncommitted DHI Dockerfiles vs GHCR tags `202606260459` / `14-vectorchord0.4.3-pgvectors0.2.0` / `17-vectorchord0.4.3-pgvectors0.3.0`.
+- **Target**
+  - Build `local/base-server-{dev,prod}:sizecheck` and `local/postgres:{14,17}-sizecheck`; confirm `/opt` is not a second copy of vector extensions.
+- **Actions log**
+  - Logged in via existing `~/.docker/config.json` `dhi.io` auth; pulled `dhi.io/postgres:{14,17}-debian13-dev` and `dhi.io/node:24.14-debian13[-dev]`.
+  - First postgres RUN failed: `ln: .../opt/postgresql/14/lib/vector.so: File exists` because current DHI already has `/opt/postgresql/N/{lib,share}` → `/usr/lib/postgresql/N/{lib,share}`.
+  - Adapted postgres RUN to skip per-file `.so` links when dest exists; link Debian `/usr/share/.../extension` into DHI sharedir.
+  - `docker buildx build --platform linux/amd64 --load` postgres 14 (`PGVECTORS_SUFFIX` empty) and 17 (`_vectors`).
+  - Rootless server build failed in `configure-apt.sh` writing `/etc/apt/preferences.d/preferences` (`Value too large for defined data type`).
+  - Rebuilt server on rootful `unix:///var/run/docker.sock` with `--network=host` (bridge DNS/IPv6 could not reach `deb.debian.org`).
+- **Validation**
+  - Postgres 14: `docker inspect` 810990202 (~811 MB) vs GHCR 1090300618 (~1.09 GB); RUN layer 322 MB vs 645 MB; `/opt/postgresql` 12K vs GHCR 363M.
+  - Postgres 17: 1072861370 (~1.07 GB) vs GHCR 1599673880 (~1.60 GB); RUN layer 573 MB vs 1.15 GB; `/opt/postgresql` 12K.
+  - `/opt/postgresql/N/lib` is a DHI directory symlink; `vchord.so`/`vector.so`/`vectors.so` share inodes with `/usr/lib/...` (regular files, not per-file symlinks); extension SQL in sharedir is `ln -s` to `/usr/share`.
+  - Server-dev: 1643701498 (~1.64 GB) vs GHCR 1635791387 (~1.64 GB); server-prod: 1728520189 (~1.73 GB) vs GHCR 1678392072 (~1.68 GB).
+- **Problems**
+  - File-level `ln -s` into `/opt/.../lib` is incompatible with current DHI dir-level `/opt`→`/usr` maps. Status: **resolved** (skip-if-exists).
+  - Rootless overlay + DHI `gid=nobody` apt dirs: EOVERFLOW; GHA/rootful OK. Status: **mitigated**.
+  - `ADD` `.deb` layers remain after `rm` (~44 MB PG14, ~48 MB PG17). Status: **open**.
+- **To Be Done**
+  - Push `fix/ci-build-after-upstream-merge` and confirm Actions on rootful runners; pin published postgres digest downstream.
+- **References**
+  - `CHANGELOG.md`, `postgres/Dockerfile`, `server/Dockerfile`, `server/configure-apt.sh`
+
+### Iteration 2026-09-14 12:05 UTC
+
+- **Context**
+  - Postgres images stored VectorChord/pgvector/pgvecto.rs `.so` and extension files twice (`/usr` and `/opt`); PG14 ~1.09 GB vs upstream 756 MB.
+- **Target**
+  - Keep one canonical copy under Debian `/usr` paths; DHI `/opt/postgresql/${PG_MAJOR}/…` should be absolute symlinks, not a second copy.
+- **Actions log**
+  - After extracting debs into `/usr/lib` and `/usr/share`, replaced `cp -a` into `/opt` with `ln -s` using absolute targets.
+  - `vector*` glob also covers `vectors*` control/sql when `PGVECTORS_TAG` is set (all four `versions.yaml` rows).
+- **Validation**
+  - Dockerfile reviewed: PG 14–16 (`pgvectors` 0.2.0, empty suffix) and PG17 (0.3.0 + `_vectors`) still use the same `RUN`; DHI rebuild not run locally.
+- **Problems**
+  - Size win needs a published image; if Postgres/`dlopen` does not follow `/opt` symlinks, that is a follow-up. Status: **open**.
+- **To Be Done**
+  - Rebuild postgres on CI; confirm `/opt/.../vchord.so` is a symlink and image size drops; pin digest downstream.
+- **References**
+  - `CHANGELOG.md`, `postgres/Dockerfile`, `postgres/versions.yaml`
+
+### Iteration 2026-09-14 11:41 UTC
+
+- **Context**
+  - `move-to-dhi` merged upstream tag `202607211135` (PR #2); GitHub Actions then failed on server, postgres, and empty leftover workflows.
+- **Target**
+  - Restore CI builds without bumping VectorChord past `0.4.3` or dropping `pgvectors`.
+- **Actions log**
+  - Dropped stale `libexpat1=2.7.1-2` pin from `server/Dockerfile` (Debian trixie-security is now `2.8.3-1~deb13u1`).
+  - Fetch VectorChord/pgvecto.rs `.deb` files with Dockerfile `ADD` (BuildKit follows GitHub 301; no DHI apt/wget).
+  - Deleted empty merge-conflict stubs `.github/workflows/{test,org-zizmor,tag-server-base}.yml`.
+- **Validation**
+  - VectorChord `0.4.3` download URL 301s to `supervc-stack` (~12 MB); pgvecto.rs `0.2.0` / `0.3.0_vectors` assets return 302. Last green server/postgres runs were 2026-07-17.
+  - Full DHI image rebuild not run locally (needs `dhi.io` login + GHCR).
+- **Problems**
+  - GHCR republish and consumer digest pin still pending until this branch builds. Status: **open**.
+- **To Be Done**
+  - Push `fix/ci-build-after-upstream-merge`, confirm Actions, merge to `move-to-dhi`; pin published postgres digest downstream.
+- **References**
+  - `CHANGELOG.md`, `server/Dockerfile`, `postgres/Dockerfile`, `.github/workflows/`
+
 ### Iteration 2026-07-17 08:07 UTC
 
 - **Context**
